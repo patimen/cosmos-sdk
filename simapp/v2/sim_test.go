@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"iter"
 	"math/rand"
 	"os"
 	"path/filepath"
@@ -15,7 +16,6 @@ import (
 	cmttypes "github.com/cometbft/cometbft/types"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/exp/maps"
-	"iter"
 
 	"cosmossdk.io/core/appmodule"
 	appmodulev2 "cosmossdk.io/core/appmodule/v2"
@@ -85,6 +85,7 @@ type TestInstance[T Tx] struct {
 }
 
 func SetupTestInstance[T Tx](t *testing.T) TestInstance[T] {
+	t.Helper()
 	nodeHome := t.TempDir()
 	currentDir, err := os.Getwd()
 	require.NoError(t, err)
@@ -195,6 +196,7 @@ func doChainInitWithGenesis[T Tx](
 	genesisAppState json.RawMessage,
 	appStore cometbfttypes.Store,
 ) (*server.BlockResponse, store.Hash) {
+	t.Helper()
 	genesisReq := &server.BlockRequest[T]{
 		Height:    0, // todo: or 1?
 		Time:      genesisTimestamp,
@@ -253,6 +255,7 @@ func doMainLoop[T Tx](
 	accounts []simtypes.Account,
 	txBuilder simsxv2.TXBuilder[T],
 ) {
+	t.Helper()
 	blockTime := cs.blockTime
 	activeValidatorSet := cs.activeValidatorSet
 	if len(activeValidatorSet) == 0 {
@@ -354,7 +357,6 @@ func doMainLoop[T Tx](
 		}
 		txTotalCounter += txPerBlockCounter
 		activeValidatorSet = activeValidatorSet.Update(blockRsp.ValidatorUpdates)
-		fmt.Printf("active validator set: %d\n", len(activeValidatorSet))
 	}
 	fmt.Println("+++ reporter:\n" + rootReporter.Summary().String())
 	fmt.Printf("Tx total: %d skipped: %d\n", txTotalCounter, txSkippedCounter)
@@ -368,8 +370,7 @@ func prepareSimsMsgFactories(
 	// get all proposal types
 	proposalRegistry := simsx.NewUniqueTypeRegistry()
 	for _, m := range modules {
-		switch xm := m.(type) {
-		case HasProposalMsgsX:
+		if xm, ok := m.(HasProposalMsgsX); ok {
 			xm.ProposalMsgsX(weights, proposalRegistry)
 			// todo: register legacy and v1 msg proposals
 		}
