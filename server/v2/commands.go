@@ -96,9 +96,9 @@ func createStartCommand[T transaction.Tx](
 						cmd.PrintErrln("failed to stop servers:", err)
 					}
 
-					if err := appCloser.Close(); err != nil {
-						cmd.PrintErrln("failed to close application:", err)
-					}
+					// if err := appCloser.Close(); err != nil {
+					// 	cmd.PrintErrln("failed to close application:", err)
+					// }
 				}()
 
 				return server.Start(ctx)
